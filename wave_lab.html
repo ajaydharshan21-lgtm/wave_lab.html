@@ -1,0 +1,1208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wave Mathematics Lab</title>
+
+<style>
+    * {
+        box-sizing: border-box;
+    }
+
+    body {
+        margin: 0;
+        font-family: Arial, sans-serif;
+        background: #10131a;
+        color: #f2f2f2;
+    }
+
+    header {
+        padding: 20px;
+        text-align: center;
+        background: #181d27;
+        border-bottom: 1px solid #303746;
+    }
+
+    h1 {
+        margin: 0 0 8px;
+    }
+
+    header p {
+        margin: 0;
+        color: #aeb7c7;
+    }
+
+    .container {
+        max-width: 1200px;
+        margin: auto;
+        padding: 20px;
+    }
+
+    .grid {
+        display: grid;
+        grid-template-columns: 360px 1fr;
+        gap: 20px;
+    }
+
+    .panel {
+        background: #181d27;
+        border: 1px solid #303746;
+        border-radius: 12px;
+        padding: 18px;
+    }
+
+    label {
+        display: block;
+        margin-top: 12px;
+        margin-bottom: 5px;
+        color: #cbd3df;
+    }
+
+    input, select, textarea {
+        width: 100%;
+        padding: 10px;
+        border-radius: 7px;
+        border: 1px solid #414a5c;
+        background: #0f131a;
+        color: white;
+        font-size: 15px;
+    }
+
+    textarea {
+        min-height: 100px;
+        resize: vertical;
+    }
+
+    button {
+        width: 100%;
+        padding: 11px;
+        margin-top: 12px;
+        border: none;
+        border-radius: 7px;
+        background: #3478f6;
+        color: white;
+        font-size: 15px;
+        cursor: pointer;
+    }
+
+    button:hover {
+        background: #2563d4;
+    }
+
+    .secondary {
+        background: #3b4352;
+    }
+
+    .secondary:hover {
+        background: #4b5568;
+    }
+
+    .result {
+        margin-top: 15px;
+        padding: 14px;
+        background: #0e1218;
+        border-radius: 8px;
+        line-height: 1.7;
+        overflow-wrap: anywhere;
+    }
+
+    .equation {
+        font-size: 18px;
+        padding: 12px;
+        margin-top: 10px;
+        background: #202735;
+        border-radius: 8px;
+        font-family: Georgia, serif;
+    }
+
+    canvas {
+        display: block;
+        width: 100%;
+        height: 600px;
+        background: #080b10;
+        border-radius: 10px;
+        border: 1px solid #303746;
+        cursor: grab;
+    }
+
+    canvas:active {
+        cursor: grabbing;
+    }
+
+    .hint {
+        color: #9da8ba;
+        font-size: 13px;
+        margin-top: 8px;
+    }
+
+    .chat {
+        margin-top: 20px;
+    }
+
+    .error {
+        color: #ff8585;
+    }
+
+    .success {
+        color: #8fe39b;
+    }
+
+    @media (max-width: 850px) {
+        .grid {
+            grid-template-columns: 1fr;
+        }
+
+        canvas {
+            height: 450px;
+        }
+    }
+</style>
+</head>
+
+<body>
+
+<header>
+    <h1>Wave Mathematics Lab</h1>
+    <p>Measurements → Mathematics → 3D Wave Visualization</p>
+</header>
+
+<div class="container">
+
+    <div class="grid">
+
+        <!-- INPUT PANEL -->
+        <div class="panel">
+
+            <h2>Wave Parameters</h2>
+
+            <label>Wave Height / Amplitude (m)</label>
+            <input id="height" type="number" step="any" placeholder="Example: 35">
+
+            <label>Frequency (Hz)</label>
+            <input id="frequency" type="number" step="any" placeholder="Example: 0.12">
+
+            <label>Wave Speed (m/s)</label>
+            <input id="speed" type="number" step="any" placeholder="Example: 8">
+
+            <label>Direction</label>
+            <select id="direction">
+                <option value="North">North</option>
+                <option value="Northeast">Northeast</option>
+                <option value="East">East</option>
+                <option value="Southeast">Southeast</option>
+                <option value="South">South</option>
+                <option value="Southwest">Southwest</option>
+                <option value="West">West</option>
+                <option value="Northwest">Northwest</option>
+            </select>
+
+            <label>Time (seconds)</label>
+            <input id="time" type="number" step="any" placeholder="Example: 42">
+
+            <label>Distance (km)</label>
+            <input id="distance" type="number" step="any" placeholder="Example: 7.5">
+
+            <button onclick="calculateWave()">
+                Calculate + Visualize
+            </button>
+
+            <button class="secondary" onclick="randomProblem()">
+                Generate Random Problem
+            </button>
+
+            <div id="results" class="result">
+                Enter your measurements and calculate the wave.
+            </div>
+
+        </div>
+
+
+        <!-- GRAPH PANEL -->
+        <div class="panel">
+
+            <h2>3D Wave Visualization</h2>
+
+            <canvas id="canvas"></canvas>
+
+            <div class="hint">
+                Drag to rotate the 3D view. Use the mouse wheel to zoom.
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- CHATBOT -->
+    <div class="panel chat">
+
+        <h2>Wave Mathematics Chatbot</h2>
+
+        <p class="hint">
+            Enter measurements in natural language.
+        </p>
+
+        <textarea id="chatInput"
+        placeholder="Example:
+height 35 m, frequency 0.12 Hz,
+speed 8 m/s, direction north,
+time 42 seconds, distance 7.5 km"></textarea>
+
+        <button onclick="chatCalculate()">
+            Calculate From Message
+        </button>
+
+        <div id="chatResult" class="result">
+            Waiting for a measurement message.
+        </div>
+
+    </div>
+
+</div>
+
+
+<script>
+
+/* =========================================================
+   GLOBAL STATE
+========================================================= */
+
+let graphData = null;
+
+let rotationX = 0.9;
+let rotationY = -0.7;
+let zoom = 1;
+
+let dragging = false;
+let lastMouseX = 0;
+let lastMouseY = 0;
+
+
+/* =========================================================
+   DIRECTIONS
+========================================================= */
+
+const directions = {
+    "East": 0,
+    "Northeast": 45,
+    "North": 90,
+    "Northwest": 135,
+    "West": 180,
+    "Southwest": 225,
+    "South": 270,
+    "Southeast": 315
+};
+
+
+/* =========================================================
+   WAVE CALCULATION
+========================================================= */
+
+function calculateValues(height, frequency, speed, direction, time, distance) {
+
+    if (!Number.isFinite(height) || height <= 0) {
+        throw new Error("Wave height must be greater than 0.");
+    }
+
+    if (!Number.isFinite(frequency) || frequency <= 0) {
+        throw new Error("Frequency must be greater than 0.");
+    }
+
+    if (!Number.isFinite(speed) || speed <= 0) {
+        throw new Error("Wave speed must be greater than 0.");
+    }
+
+    if (!Number.isFinite(time) || time < 0) {
+        throw new Error("Time must be 0 or greater.");
+    }
+
+    if (!Number.isFinite(distance) || distance < 0) {
+        throw new Error("Distance must be 0 or greater.");
+    }
+
+    const distanceMeters = distance * 1000;
+
+    const wavelength = speed / frequency;
+
+    const waveNumber = (2 * Math.PI) / wavelength;
+
+    const angularFrequency = 2 * Math.PI * frequency;
+
+    const period = 1 / frequency;
+
+    const angle = directions[direction];
+
+    const radians = angle * Math.PI / 180;
+
+    const phase =
+        waveNumber * distanceMeters -
+        angularFrequency * time;
+
+    const waveHeight =
+        height * Math.sin(phase);
+
+    return {
+        height,
+        frequency,
+        speed,
+        direction,
+        time,
+        distance,
+        distanceMeters,
+        wavelength,
+        waveNumber,
+        angularFrequency,
+        period,
+        angle,
+        waveHeight,
+        phase
+    };
+}
+
+
+/* =========================================================
+   EQUATION TEXT
+========================================================= */
+
+function equationText(r) {
+
+    const k = r.waveNumber.toFixed(5);
+    const w = r.angularFrequency.toFixed(5);
+
+    return `
+        z(x,t) = ${r.height.toFixed(3)}
+        sin(${k}d - ${w}t)
+    `;
+}
+
+
+/* =========================================================
+   CALCULATE BUTTON
+========================================================= */
+
+function calculateWave() {
+
+    try {
+
+        const height =
+            parseFloat(document.getElementById("height").value);
+
+        const frequency =
+            parseFloat(document.getElementById("frequency").value);
+
+        const speed =
+            parseFloat(document.getElementById("speed").value);
+
+        const direction =
+            document.getElementById("direction").value;
+
+        const time =
+            parseFloat(document.getElementById("time").value);
+
+        const distance =
+            parseFloat(document.getElementById("distance").value);
+
+        const result = calculateValues(
+            height,
+            frequency,
+            speed,
+            direction,
+            time,
+            distance
+        );
+
+        showResults(result);
+
+        graphData = result;
+
+        draw();
+
+    } catch (error) {
+
+        document.getElementById("results").innerHTML =
+            `<span class="error">${error.message}</span>`;
+    }
+}
+
+
+/* =========================================================
+   DISPLAY RESULTS
+========================================================= */
+
+function showResults(r) {
+
+    document.getElementById("results").innerHTML = `
+
+        <div class="success">
+            Calculation successful.
+        </div>
+
+        <div class="equation">
+            ${equationText(r)}
+        </div>
+
+        <br>
+
+        <b>Wavelength:</b>
+        ${r.wavelength.toFixed(4)} m
+        <br>
+
+        <b>Wave number k:</b>
+        ${r.waveNumber.toFixed(6)} rad/m
+        <br>
+
+        <b>Angular frequency ω:</b>
+        ${r.angularFrequency.toFixed(6)} rad/s
+        <br>
+
+        <b>Period:</b>
+        ${r.period.toFixed(4)} s
+        <br>
+
+        <b>Direction:</b>
+        ${r.direction} (${r.angle}°)
+        <br>
+
+        <b>Distance:</b>
+        ${r.distanceMeters.toFixed(2)} m
+        <br>
+
+        <b>Phase:</b>
+        ${r.phase.toFixed(5)} rad
+        <br>
+
+        <b>Calculated wave displacement:</b>
+        ${r.waveHeight.toFixed(4)} m
+
+    `;
+}
+
+
+/* =========================================================
+   RANDOM PROBLEM
+========================================================= */
+
+function randomProblem() {
+
+    const height =
+        randomNumber(5, 100);
+
+    const frequency =
+        randomNumber(0.02, 1);
+
+    const speed =
+        randomNumber(3, 30);
+
+    const time =
+        randomNumber(0, 120);
+
+    const distance =
+        randomNumber(1, 30);
+
+    const directionNames =
+        Object.keys(directions);
+
+    const direction =
+        directionNames[
+            Math.floor(Math.random() * directionNames.length)
+        ];
+
+    document.getElementById("height").value =
+        height.toFixed(2);
+
+    document.getElementById("frequency").value =
+        frequency.toFixed(3);
+
+    document.getElementById("speed").value =
+        speed.toFixed(2);
+
+    document.getElementById("direction").value =
+        direction;
+
+    document.getElementById("time").value =
+        time.toFixed(2);
+
+    document.getElementById("distance").value =
+        distance.toFixed(2);
+
+    calculateWave();
+}
+
+
+function randomNumber(min, max) {
+
+    return min + Math.random() * (max - min);
+}
+
+
+/* =========================================================
+   CHATBOT
+========================================================= */
+
+function chatCalculate() {
+
+    const message =
+        document.getElementById("chatInput").value
+        .toLowerCase();
+
+    try {
+
+        const values = parseMessage(message);
+
+        document.getElementById("height").value =
+            values.height;
+
+        document.getElementById("frequency").value =
+            values.frequency;
+
+        document.getElementById("speed").value =
+            values.speed;
+
+        document.getElementById("direction").value =
+            values.direction;
+
+        document.getElementById("time").value =
+            values.time;
+
+        document.getElementById("distance").value =
+            values.distance;
+
+        const result = calculateValues(
+            values.height,
+            values.frequency,
+            values.speed,
+            values.direction,
+            values.time,
+            values.distance
+        );
+
+        showResults(result);
+
+        graphData = result;
+
+        draw();
+
+        document.getElementById("chatResult").innerHTML =
+            `
+            <span class="success">
+                I extracted the measurements and calculated the wave.
+            </span>
+            <br><br>
+            Equation:
+            <div class="equation">
+                ${equationText(result)}
+            </div>
+            `;
+
+    } catch (error) {
+
+        document.getElementById("chatResult").innerHTML =
+            `<span class="error">${error.message}</span>`;
+    }
+}
+
+
+/* =========================================================
+   NATURAL LANGUAGE PARSER
+========================================================= */
+
+function parseMessage(text) {
+
+    const height =
+        findNumber(text, [
+            "height",
+            "amplitude"
+        ]);
+
+    const frequency =
+        findNumber(text, [
+            "frequency",
+            "freq"
+        ]);
+
+    const speed =
+        findNumber(text, [
+            "speed",
+            "velocity"
+        ]);
+
+    const time =
+        findNumber(text, [
+            "time",
+            "seconds",
+            "second"
+        ]);
+
+    const distance =
+        findNumber(text, [
+            "distance"
+        ]);
+
+    const direction =
+        findDirection(text);
+
+    const missing = [];
+
+    if (height === null) missing.push("height");
+    if (frequency === null) missing.push("frequency");
+    if (speed === null) missing.push("speed");
+    if (time === null) missing.push("time");
+    if (distance === null) missing.push("distance");
+    if (direction === null) missing.push("direction");
+
+    if (missing.length > 0) {
+
+        throw new Error(
+            "Missing: " + missing.join(", ") +
+            ". Example: height 35 m, frequency 0.12 Hz, speed 8 m/s, direction north, time 42 s, distance 7.5 km"
+        );
+    }
+
+    return {
+        height,
+        frequency,
+        speed,
+        time,
+        distance,
+        direction
+    };
+}
+
+
+/* =========================================================
+   FIND NUMBERS
+========================================================= */
+
+function findNumber(text, keywords) {
+
+    for (const keyword of keywords) {
+
+        const escaped =
+            keyword.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+        const pattern =
+            new RegExp(
+                escaped +
+                "\\s*(?:is|=|of|:)?\\s*" +
+                "(-?\\d+(?:\\.\\d+)?)",
+                "i"
+            );
+
+        const match =
+            text.match(pattern);
+
+        if (match) {
+
+            let value =
+                parseFloat(match[1]);
+
+            if (keyword === "distance") {
+
+                if (
+                    text.includes(
+                        match[0] + " m"
+                    )
+                ) {
+                    value = value / 1000;
+                }
+            }
+
+            return value;
+        }
+    }
+
+    return null;
+}
+
+
+/* =========================================================
+   FIND DIRECTION
+========================================================= */
+
+function findDirection(text) {
+
+    const names =
+        Object.keys(directions)
+        .sort((a, b) => b.length - a.length);
+
+    for (const name of names) {
+
+        if (
+            text.includes(
+                name.toLowerCase()
+            )
+        ) {
+            return name;
+        }
+    }
+
+    return null;
+}
+
+
+/* =========================================================
+   3D GRAPH
+========================================================= */
+
+const canvas =
+    document.getElementById("canvas");
+
+const ctx =
+    canvas.getContext("2d");
+
+
+function resizeCanvas() {
+
+    const rect =
+        canvas.getBoundingClientRect();
+
+    canvas.width =
+        rect.width * window.devicePixelRatio;
+
+    canvas.height =
+        rect.height * window.devicePixelRatio;
+
+    ctx.setTransform(
+        window.devicePixelRatio,
+        0,
+        0,
+        window.devicePixelRatio,
+        0,
+        0
+    );
+
+    draw();
+}
+
+
+window.addEventListener(
+    "resize",
+    resizeCanvas
+);
+
+
+/* =========================================================
+   3D PROJECTION
+========================================================= */
+
+function project(x, y, z) {
+
+    const cosY =
+        Math.cos(rotationY);
+
+    const sinY =
+        Math.sin(rotationY);
+
+    const x1 =
+        x * cosY - z * sinY;
+
+    const z1 =
+        x * sinY + z * cosY;
+
+    const cosX =
+        Math.cos(rotationX);
+
+    const sinX =
+        Math.sin(rotationX);
+
+    const y1 =
+        y * cosX - z1 * sinX;
+
+    const z2 =
+        y * sinX + z1 * cosX;
+
+    const scale =
+        1.5 * zoom;
+
+    return {
+        x: canvas.clientWidth / 2 + x1 * scale,
+        y: canvas.clientHeight / 2 + y1 * scale,
+        depth: z2
+    };
+}
+
+
+/* =========================================================
+   DRAW WAVE
+========================================================= */
+
+function draw() {
+
+    if (!ctx) return;
+
+    const width =
+        canvas.clientWidth;
+
+    const height =
+        canvas.clientHeight;
+
+    ctx.clearRect(
+        0,
+        0,
+        width,
+        height
+    );
+
+    if (!graphData) {
+
+        ctx.fillStyle = "#8993a5";
+        ctx.font = "18px Arial";
+        ctx.textAlign = "center";
+
+        ctx.fillText(
+            "Calculate a wave to display it",
+            width / 2,
+            height / 2
+        );
+
+        return;
+    }
+
+    const r =
+        graphData;
+
+    const wavelength =
+        r.wavelength;
+
+    const k =
+        r.waveNumber;
+
+    const omega =
+        r.angularFrequency;
+
+    const angle =
+        r.angle * Math.PI / 180;
+
+    const dx =
+        Math.cos(angle);
+
+    const dy =
+        Math.sin(angle);
+
+    const gridSize = 36;
+
+    const span =
+        wavelength * 5;
+
+    const step =
+        span / gridSize;
+
+    const points = [];
+
+    for (let iy = 0; iy <= gridSize; iy++) {
+
+        for (let ix = 0; ix <= gridSize; ix++) {
+
+            const x =
+                -span / 2 + ix * step;
+
+            const y =
+                -span / 2 + iy * step;
+
+            const distanceAlongWave =
+                x * dx + y * dy;
+
+            const z =
+                r.height *
+                Math.sin(
+                    k * distanceAlongWave -
+                    omega * r.time
+                );
+
+            points.push({
+                x,
+                y,
+                z
+            });
+        }
+    }
+
+    const projected = [];
+
+    for (const p of points) {
+
+        projected.push({
+            original: p,
+            screen: project(
+                p.x / wavelength * 25,
+                p.y / wavelength * 25,
+                p.z / r.height * 25
+            )
+        });
+    }
+
+    /*
+       Draw grid lines.
+    */
+
+    ctx.lineWidth = 1;
+
+    for (let iy = 0; iy <= gridSize; iy++) {
+
+        ctx.beginPath();
+
+        for (let ix = 0; ix <= gridSize; ix++) {
+
+            const index =
+                iy * (gridSize + 1) + ix;
+
+            const p =
+                projected[index].screen;
+
+            if (ix === 0) {
+                ctx.moveTo(p.x, p.y);
+            } else {
+                ctx.lineTo(p.x, p.y);
+            }
+        }
+
+        ctx.strokeStyle =
+            "rgba(100,160,255,0.35)";
+
+        ctx.stroke();
+    }
+
+
+    for (let ix = 0; ix <= gridSize; ix++) {
+
+        ctx.beginPath();
+
+        for (let iy = 0; iy <= gridSize; iy++) {
+
+            const index =
+                iy * (gridSize + 1) + ix;
+
+            const p =
+                projected[index].screen;
+
+            if (iy === 0) {
+                ctx.moveTo(p.x, p.y);
+            } else {
+                ctx.lineTo(p.x, p.y);
+            }
+        }
+
+        ctx.strokeStyle =
+            "rgba(100,160,255,0.35)";
+
+        ctx.stroke();
+    }
+
+
+    /*
+       Draw axes.
+    */
+
+    const origin =
+        project(0, 0, 0);
+
+    const xAxis =
+        project(200, 0, 0);
+
+    const yAxis =
+        project(0, 200, 0);
+
+    const zAxis =
+        project(0, 0, 200);
+
+    drawAxis(
+        origin,
+        xAxis,
+        "X"
+    );
+
+    drawAxis(
+        origin,
+        yAxis,
+        "Y"
+    );
+
+    drawAxis(
+        origin,
+        zAxis,
+        "Z"
+    );
+}
+
+
+/* =========================================================
+   AXIS
+========================================================= */
+
+function drawAxis(a, b, label) {
+
+    ctx.beginPath();
+
+    ctx.moveTo(a.x, a.y);
+    ctx.lineTo(b.x, b.y);
+
+    ctx.strokeStyle =
+        "rgba(255,255,255,0.7)";
+
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "14px Arial";
+
+    ctx.fillText(
+        label,
+        b.x,
+        b.y
+    );
+}
+
+
+/* =========================================================
+   MOUSE ROTATION
+========================================================= */
+
+canvas.addEventListener(
+    "mousedown",
+    function(event) {
+
+        dragging = true;
+
+        lastMouseX =
+            event.clientX;
+
+        lastMouseY =
+            event.clientY;
+    }
+);
+
+
+window.addEventListener(
+    "mouseup",
+    function() {
+        dragging = false;
+    }
+);
+
+
+window.addEventListener(
+    "mousemove",
+    function(event) {
+
+        if (!dragging) return;
+
+        const dx =
+            event.clientX - lastMouseX;
+
+        const dy =
+            event.clientY - lastMouseY;
+
+        rotationY += dx * 0.01;
+        rotationX += dy * 0.01;
+
+        lastMouseX =
+            event.clientX;
+
+        lastMouseY =
+            event.clientY;
+
+        draw();
+    }
+);
+
+
+/* =========================================================
+   TOUCH ROTATION
+========================================================= */
+
+canvas.addEventListener(
+    "touchstart",
+    function(event) {
+
+        if (event.touches.length !== 1) return;
+
+        dragging = true;
+
+        lastMouseX =
+            event.touches[0].clientX;
+
+        lastMouseY =
+            event.touches[0].clientY;
+    }
+);
+
+
+canvas.addEventListener(
+    "touchmove",
+    function(event) {
+
+        if (!dragging) return;
+
+        event.preventDefault();
+
+        const touch =
+            event.touches[0];
+
+        const dx =
+            touch.clientX - lastMouseX;
+
+        const dy =
+            touch.clientY - lastMouseY;
+
+        rotationY += dx * 0.01;
+        rotationX += dy * 0.01;
+
+        lastMouseX =
+            touch.clientX;
+
+        lastMouseY =
+            touch.clientY;
+
+        draw();
+    },
+    { passive: false }
+);
+
+
+canvas.addEventListener(
+    "touchend",
+    function() {
+        dragging = false;
+    }
+);
+
+
+/* =========================================================
+   ZOOM
+========================================================= */
+
+canvas.addEventListener(
+    "wheel",
+    function(event) {
+
+        event.preventDefault();
+
+        if (event.deltaY < 0) {
+            zoom *= 1.1;
+        } else {
+            zoom /= 1.1;
+        }
+
+        zoom =
+            Math.max(
+                0.3,
+                Math.min(zoom, 5)
+            );
+
+        draw();
+    },
+    { passive: false }
+);
+
+
+/* =========================================================
+   START
+========================================================= */
+
+resizeCanvas();
+
+</script>
+
+</body>
+</html>
